@@ -8,6 +8,9 @@ the Netiquette.
 
 ![screenshot](https://cdn.discordapp.com/attachments/535239062139699201/570752869104484356/unknown.png)
 
+Neticheck can also produce JSON files containing the results of the analysis. These files can then be read by Neticheck
+using the `-i` option.
+
 This is my first project in Kotlin, feel free to suggest improvements to the code.
 
 This app uses:
@@ -15,6 +18,7 @@ This app uses:
 * Apache James Mime4J for parsing EMails
 * Jansi for writing colors to the terminal
 * Argparser for parsing console arguments
+* Gson for creating and parsing .json files
 
 This project is made available to you under the MPL 2.0 license (incompatible with secondary licenses).
 
@@ -27,6 +31,8 @@ Usage: `java -jar Neticheck.jar path/to/my/file.eml`
 To get the .eml file: from Thunderbird, choose Save As on any message in your inbox. You can also test your own messages
 by saving them as drafts.
 
+To get more information on the different options available: `java -jar Neticheck.jar --help` 
+
 ### Severity
 
 * **Errors**: Neticheck has spotted elements that do not correspond to the Netiquette.
@@ -35,8 +41,8 @@ by saving them as drafts.
 
 ### Supported checks
 
-* Content-Type validation (empty, incorrect, incorrect `multipart/mixed`)
-* Potential `assistants.news` post
+* Content-Type validation (empty, invalid, incorrect `multipart/mixed`)
+* Potential post to a restricted newsgroup (e.g. `assistants.news`)
 * Potential `Cc`, `Reply-To`, `In-Reply-To` misuse
 * Potential missing identity in `From`
 * Subject presence

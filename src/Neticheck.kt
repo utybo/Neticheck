@@ -23,13 +23,25 @@ private val englishDeterminers = listOf(
     "our", "their", "much", "many", "most", "some", "any", "enough"
 )
 
+private val restrictedNewsgroups = listOf(
+    "announcement.ing1",
+    "announcement.ing2",
+    "announcement.ing3",
+    "announcement.sup",
+    "announcement.spe",
+    "announcement.vie-etudiante",
+    "assistants.apprentis.news",
+    "assistants.news",
+    "cri.news"
+)
+
 /**
  * Check the email for potential breaches of Netiquette
  *
  * @param emlContent An InputStream from which to read the mail's content
  * @param hints The list that will receive all of the hints found by analyzing the mail
  */
-fun checkEml(emlContent: InputStream, hints: MutableList<NetiquetteHint>)
+fun checkEml(emlContent: InputStream, hints: MutableList<AnalysisHint>)
 {
     val msg = Builder.of(emlContent).build()
 
@@ -42,7 +54,8 @@ fun checkEml(emlContent: InputStream, hints: MutableList<NetiquetteHint>)
     var body: String? = null
     when
     {
-        contentType eqic "text/plain" -> {
+        contentType eqic "text/plain" ->
+        {
             val reader = (msg.body as TextBody).reader
             body = reader.readText()
             reader.close()
@@ -80,25 +93,40 @@ fun checkEml(emlContent: InputStream, hints: MutableList<NetiquetteHint>)
 
 }
 
+/**
+ * Shortcut infix function for "equals ignore case"
+ */
 private infix fun String.eqic(s: String): Boolean = this.equals(s, true)
 
-private fun checkMeta(msg: Message, hints: MutableList<NetiquetteHint>)
+/**
+ * Check the metadata of a message (checks its headers for potential issues)
+ */
+private fun checkMeta(msg: Message, hints: MutableList<AnalysisHint>)
 {
-    if(msg.getHeader("Newsgroups")?.contains("assistants.news") == true)
-        hints += HintType.WARNING with "This message is bound for assistants.news, are you sure that you are allowed to do that?"
+    msg.getHeader("Newsgroups")?.doForAll({ it in restrictedNewsgroups }) {
+        hints += HintType.WARNING with "This message is bound for a restricted newsgroup, are you sure that you are allowed to do that?" ctx it
+    }
 
-    if(msg.hasHeader("Cc"))
-        hints += HintType.INFO with "This message has a Cc field: check the recipients carefully" ref "2.1.2" ctx msg.getHeader("Cc")?.firstOrNull()
+    if (msg.hasHeader("Cc"))
+        hints += HintType.INFO with "This message has a Cc field: check the recipients carefully" ref "2.1.2" ctx msg.getHeader(
+            "Cc"
+        )?.firstOrNull()
 
-    if(msg.hasHeader("Reply-To"))
-        hints += HintType.INFO with "This message has a Reply-To field: check the address carefully" ref "2.1.2" ctx msg.getHeader("Reply-To")?.firstOrNull()
+    if (msg.hasHeader("Reply-To"))
+        hints += HintType.INFO with "This message has a Reply-To field: check the address carefully" ref "2.1.2" ctx msg.getHeader(
+            "Reply-To"
+        )?.firstOrNull()
 
-    if(msg.hasHeader("In-Reply-To"))
-        hints += HintType.INFO with "This message has an In-Reply-To field: check that the original message's id is correct" ref "2.1.2" ctx msg.getHeader("Reply-To")?.firstOrNull()
+    if (msg.hasHeader("In-Reply-To"))
+        hints += HintType.INFO with "This message has an In-Reply-To field: check that the original message's id is correct" ref "2.1.2" ctx msg.getHeader(
+            "Reply-To"
+        )?.firstOrNull()
 
-    if(msg.getHeader("From")?.none{it.contains("@epita.fr")} == true)
+    if (msg.getHeader("From")?.none { it.contains("@epita.fr") } == true)
         hints +=
-            HintType.WARNING with "The From field does not contain an address with the epita.fr domain, make sure to include your login or your surname and first name" ref "2.1.3" ctx msg.getHeader("From")?.first()
+            HintType.WARNING with "The From field does not contain an address with the epita.fr domain, make sure to include your login or your surname and first name" ref "2.1.3" ctx msg.getHeader(
+                "From"
+            )?.first()
 
 }
 
@@ -106,7 +134,10 @@ private fun Message.hasHeader(s: String): Boolean = this.header.getFields(s)?.is
 
 private fun Message.getHeader(s: String): Iterable<String>? = this.header.getFields(s).map { it.body }
 
-fun checkSubject(subject: String, hints: MutableList<NetiquetteHint>)
+/**
+ * Check the subject of a message for potential errors
+ */
+fun checkSubject(subject: String, hints: MutableList<AnalysisHint>)
 {
     if (subject.length > 80)
         hints += HintType.ERROR with "Subject is too long (> 80 chars)" ref "2.1.1.2"
@@ -127,7 +158,7 @@ fun checkSubject(subject: String, hints: MutableList<NetiquetteHint>)
 
 private val trailingWhitespace = Regex(""".*?\s""", RegexOption.MULTILINE)
 
-fun checkBody(body: String, hints: MutableList<NetiquetteHint>)
+fun checkBody(body: String, hints: MutableList<AnalysisHint>)
 {
     val bodyBits = body.split("\r\n\r\n-- \r\n")
 
@@ -140,7 +171,7 @@ fun checkBody(body: String, hints: MutableList<NetiquetteHint>)
             val signature = bodyBits[1]
             val signatureLines = signature.split("\r\n")
 
-            signatureLines.doForAll({it.length > 80}) {
+            signatureLines.doForAll({ it.length > 80 }) {
                 hints += HintType.ERROR with "Signature line is too long (> 80)" ref "2.3" ctx it
             }
 
@@ -157,7 +188,7 @@ fun checkBody(body: String, hints: MutableList<NetiquetteHint>)
 
     val lines = bodyBits[0].split("\r\n")
 
-    lines.doForAll({it.length > 80}) {
+    lines.doForAll({ it.length > 80 }) {
         hints += HintType.ERROR with "Body line is too long (> 80)" ref "2.2.2.1" ctx it
     }
 
@@ -165,7 +196,7 @@ fun checkBody(body: String, hints: MutableList<NetiquetteHint>)
         hints += HintType.ERROR with "Message line is too long (> 72)" ref "2.2.2.1" ctx it
     }
 
-    lines.doForAll({ trailingWhitespace.matches(it) && it != "-- "}) {
+    lines.doForAll({ trailingWhitespace.matches(it) && it != "-- " }) {
         hints += HintType.ERROR with "Body line has a trailing whitespace" ref "2.2.2.5" ctx it
     }
 
@@ -184,11 +215,11 @@ fun checkBody(body: String, hints: MutableList<NetiquetteHint>)
  * Execute a function for the first value of the collection that matches the predicate, and return this function's result.
  * If no elements match the predicate, do not do anything and return null.
  */
-fun <T, R> Collection<T>.doForFirst(predicate: (T) -> Boolean, action: (T) -> R): R? =
+fun <T, R> Iterable<T>.doForFirst(predicate: (T) -> Boolean, action: (T) -> R): R? =
     doIfNotNull(this.firstOrNull(predicate), action)
 
-fun <T> Collection<T>.doForAll(predicate: (T) -> Boolean, action: (T) -> Unit): Unit =
-        this.filter(predicate).forEach(action)
+fun <T> Iterable<T>.doForAll(predicate: (T) -> Boolean, action: (T) -> Unit): Unit =
+    this.filter(predicate).forEach(action)
 
 
 /**
@@ -196,7 +227,7 @@ fun <T> Collection<T>.doForAll(predicate: (T) -> Boolean, action: (T) -> Unit): 
  */
 fun <T, R> doIfNotNull(value: T?, func: (T) -> R): R?
 {
-    if(value != null)
+    if (value != null)
         return func(value)
     return null
 }
@@ -204,14 +235,14 @@ fun <T, R> doIfNotNull(value: T?, func: (T) -> R): R?
 private fun CharSequence.containsAny(list: List<CharSequence>): Boolean = list.any { this.containsWord(it, true) }
 
 private fun CharSequence.containsWord(word: CharSequence, ignoreCase: Boolean = false): Boolean =
-    this.split(' ').any{it.equals("$word", ignoreCase = ignoreCase)}
+    this.split(' ').any { it.equals("$word", ignoreCase = ignoreCase) }
 
 
 private val tagsPattern = Regex("""(Re: )?(\[[A-Z\d-_+/]+]){2}""")
 private val tooManyRes = Regex("""(Re: ?){2,}""")
 private val caseMismatch = Regex("""(\[.*?[^A-Z\d-_+/].*?])""")
 
-fun checkSubjectTags(tags: String, hints: MutableList<NetiquetteHint>)
+fun checkSubjectTags(tags: String, hints: MutableList<AnalysisHint>)
 {
     if (!tags.matches(tagsPattern))
     {
@@ -225,7 +256,7 @@ fun checkSubjectTags(tags: String, hints: MutableList<NetiquetteHint>)
 
     if (tags.contains("[MISC]", true))
     {
-        hints += NetiquetteHint(HintType.INFO, "MISC tag use is discouraged", "2.1.1.1") ctx tags
+        hints += AnalysisHint(HintType.INFO, "MISC tag use is discouraged", "2.1.1.1") ctx tags
 
     }
 
@@ -234,7 +265,7 @@ fun checkSubjectTags(tags: String, hints: MutableList<NetiquetteHint>)
 /**
  * A hint that the Netiquette might not have been respected at some point.
  */
-data class NetiquetteHint(
+data class AnalysisHint(
     /**
      * The type (or severity) of the hint
      */
@@ -250,17 +281,18 @@ data class NetiquetteHint(
     /**
      * The context of the hint, usually the string that caused this hint to be reported in the first place
      */
-    val context: String? = null)
+    val context: String? = null
+)
 {
-    infix fun ref(s: String?): NetiquetteHint = this.copy(reference = s)
-    infix fun ctx(s: String?): NetiquetteHint = this.copy(context = s)
+    infix fun ref(s: String?): AnalysisHint = this.copy(reference = s)
+    infix fun ctx(s: String?): AnalysisHint = this.copy(context = s)
 }
 
-enum class HintType(val symbol: Char)
+enum class HintType(val symbol: Char, val priority: Int)
 {
-    INFO('i'),
-    WARNING('!'),
-    ERROR('X');
+    INFO('i', 10),
+    WARNING('!', 5),
+    ERROR('X', 1);
 
-    infix fun with(s: String): NetiquetteHint = NetiquetteHint(this, s)
+    infix fun with(s: String): AnalysisHint = AnalysisHint(this, s)
 }
