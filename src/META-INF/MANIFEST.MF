@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Class-Path: jansi-1.18.jar apache-mime4j-dom-0.8.3.jar apache-mime4j-c
+ ore-0.8.3.jar kotlin-argparser-2.0.7.jar annotations-13.0.jar xenocom
+ -0.0.7.jar kotlin-stdlib.jar kotlin-reflect.jar kotlin-test.jar kotli
+ n-stdlib-jdk7.jar kotlin-stdlib-jdk8.jar apache-mime4j-core-0.8.3.jar
+Main-Class: guru.zoroark.neticheck.MainKt
+

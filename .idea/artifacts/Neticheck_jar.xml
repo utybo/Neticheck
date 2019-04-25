@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact name="Neticheck:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Neticheck_jar</output-path>
+    <root id="root">
+      <element id="archive" name="Neticheck.jar">
+        <element id="module-output" name="Neticheck" />
+      </element>
+      <element id="library" level="project" name="org.fusesource.jansi:jansi:1.18" />
+      <element id="library" level="project" name="org.apache.james:apache-mime4j-dom:0.8.3" />
+      <element id="library" level="project" name="com.xenomachina:kotlin-argparser:2.0.7" />
+      <element id="library" level="project" name="KotlinJavaRuntime" />
+      <element id="library" level="project" name="org.apache.james:apache-mime4j-core:0.8.3" />
+    </root>
+  </artifact>
+</component>

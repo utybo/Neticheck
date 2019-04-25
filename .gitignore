@@ -1,0 +1,8 @@
+lib/*-sources.jar
+
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+
+out
+.idea/uiDesigner.xml

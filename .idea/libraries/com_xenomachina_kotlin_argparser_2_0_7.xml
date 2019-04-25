@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="com.xenomachina:kotlin-argparser:2.0.7" type="repository">
+    <properties maven-id="com.xenomachina:kotlin-argparser:2.0.7" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-argparser-2.0.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/annotations-13.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xenocom-0.0.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-argparser-2.0.7-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/annotations-13.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xenocom-0.0.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
